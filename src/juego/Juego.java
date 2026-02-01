@@ -7,12 +7,12 @@ import java.awt.Dimension;
 import javax.swing.JFrame;
 
 /*
- * Clase principal del juego.
+ * Clase principal del juego
  * 
  * En esta clase creo la ventana principal, configuro el Canvas
- * y arranco la aplicación.
+ * y arranco la aplicación
  * 
- * @author Josema
+ * @author JosemaMR
  * 
  */
 
@@ -31,6 +31,10 @@ public class Juego extends Canvas implements Runnable {
 
 	/** Este será el título que aparecerá en la ventana */
 	private static final String NOMBRE = "Juego";
+
+	private static int aps = 0;
+
+	private static int fps = 0;
 
 	/** Ancho fijo que quiero para la ventana */
 	/** Alto fijo que quiero para la ventana */
@@ -133,17 +137,71 @@ public class Juego extends Canvas implements Runnable {
 
 	}
 
+	private void actualizar() {
+		// Incremento el contador de Actualizaciones Por Segundo (APS)
+		aps++;
+	}
+
+	private void mostrar() {
+		// Incremento el contador de Frames Por Segundo (FPS)
+		fps++;
+	}
+
 	/**
 	 * Método que ejecuta el hilo principal del juego.
 	 * 
 	 * Aquí iré implementando el game loop: actualizar la lógica renderizar en
 	 * pantalla controlar los FPS
+	 * 
+	 * Uso un bucle while que se ejecuta mientras 'enFuncionamiento' sea true
+	 * Controlo las actualizaciones por segundo usando un delta temporal, y calculo
+	 * los FPS y APS para mostrarlo en el título de la ventana
+	 * 
 	 */
 
 	@Override
 	public void run() {
+		// Cantidad de nanosegundos que hay en un segundo
+		final int NS_POR_SEGUNDO = 1000000000;
+		// Número de actualizaciones por segundo que quiero
+		final byte APS_OBJETIVO = 60;
+		// Tiempo en nanosegundos que debe pasar entre cada actualizacion
+		final double NS_POR_ACTUALIZACION = NS_POR_SEGUNDO / APS_OBJETIVO;
+
+		// Momento de la última actualización
+		long referenciaActualizacion = System.nanoTime();
+		// Momento de referencia para contar APS y FPS
+		long referenciaContador = System.nanoTime();
+
+		double tiempoTranscurrido;
+		double delta = 0;
 		// Mientras el juego esté activo, ejecuto el bucle principal
 		while (enFuncionamiento) {
+			// Momento actual al inicio de este ciclo
+			final long inicioBucle = System.nanoTime();
+
+			// Calculo el tiempo transcurrido desde la última actualización
+			tiempoTranscurrido = inicioBucle - referenciaActualizacion;
+			referenciaActualizacion = inicioBucle;
+
+			// Incremento delta con la fracción de actualización correspondiente
+			delta += tiempoTranscurrido / NS_POR_ACTUALIZACION;
+
+			// Mientras delta sea >= 1, realizo actualizaciones
+			while (delta >= 1) {
+				actualizar(); // Actualizo la lógica del juego
+				delta--; // Disminuyo delta tras cada actualización
+			}
+			// Renderizo el juego en pantalla
+			mostrar();
+
+			// Cada segundo, actualizo el título de la ventana con APS y FPS
+			if (System.nanoTime() - referenciaContador > NS_POR_SEGUNDO) {
+				ventana.setTitle(NOMBRE + " APS: " + aps + " FPS: " + fps);
+				aps = 0; // Reinicio contador de actualizaciones
+				fps = 0; // Reinicio contador de frames
+				referenciaContador = System.nanoTime(); // Reinicio referencia temporal
+			}
 
 		}
 
